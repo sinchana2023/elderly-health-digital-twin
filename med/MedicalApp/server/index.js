@@ -1,8 +1,12 @@
 /**
- * Optional host for static Expo web export + MedAssist API routes.
- * Secrets (never commit values):
- *   MEDASSIST_AI_API_KEY, MEDASSIST_AI_BASE_URL
+ * MedAssist API host: chat + Azure Digital Twins + Cosmos persistence.
+ *
+ * Secrets (names only — set via Cursor Secrets / host env):
+ *   MEDASSIST_AI_API_KEY, MEDASSIST_AI_BASE_URL, MEDASSIST_AI_MODEL
  *   AZURE_DIGITAL_TWINS_URL, AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET
+ *   AZURE_COSMOS_ENDPOINT, AZURE_COSMOS_KEY
+ *   AZURE_COSMOS_DATABASE (optional, default medassist)
+ *   AZURE_COSMOS_VITALS_CONTAINER / AZURE_COSMOS_TWIN_CONTAINER (optional)
  */
 const path = require('path');
 const fs = require('fs');
@@ -15,6 +19,13 @@ const {
   SYSTEM_PROMPT,
   MEDICAL_DISCLAIMER,
 } = require('./guardrails.cjs');
+const { getAzureStatus } = require('./azure/config');
+const { bootstrapAdt } = require('./azure/adtClient');
+const {
+  ingestTelemetry,
+  readHistory,
+  readTwinState,
+} = require('./azure/telemetryPipeline');
 
 const PORT = process.env.PORT || 3000;
 const DIST = path.join(__dirname, '../dist');
@@ -22,17 +33,70 @@ const DIST = path.join(__dirname, '../dist');
 const app = express();
 app.use(express.json({ limit: '1mb' }));
 
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
 app.get('/api/health', (_req, res) => {
+  const azure = getAzureStatus();
   res.json({
     ok: true,
     aiConfigured: Boolean(process.env.MEDASSIST_AI_API_KEY),
-    adtConfigured: Boolean(
-      process.env.AZURE_DIGITAL_TWINS_URL &&
-        process.env.AZURE_TENANT_ID &&
-        process.env.AZURE_CLIENT_ID &&
-        process.env.AZURE_CLIENT_SECRET
-    ),
+    ...azure,
   });
+});
+
+app.get('/api/azure/status', (_req, res) => {
+  res.json(getAzureStatus());
+});
+
+app.post('/api/azure/bootstrap', async (_req, res) => {
+  try {
+    const result = await bootstrapAdt();
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ ok: false, reason: e.message });
+  }
+});
+
+/** Ingest vitals → local buffer + Cosmos + ADT patch */
+app.post('/api/telemetry', async (req, res) => {
+  try {
+    const sample = req.body?.sample || req.body;
+    if (!sample || typeof sample !== 'object') {
+      return res.status(400).json({ ok: false, reason: 'sample required' });
+    }
+    const risk = req.body?.risk;
+    const result = await ingestTelemetry(sample, risk);
+    res.json(result);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok: false, reason: e.message });
+  }
+});
+
+app.get('/api/vitals/history', async (req, res) => {
+  try {
+    const limit = Number(req.query.limit) || 40;
+    const deviceId = String(req.query.deviceId || 'esp32Device');
+    const result = await readHistory(limit, deviceId);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ source: 'error', items: [], reason: e.message });
+  }
+});
+
+app.get('/api/twin', async (_req, res) => {
+  try {
+    const result = await readTwinState();
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ source: 'error', reason: e.message });
+  }
 });
 
 app.post('/api/chat', async (req, res) => {
@@ -113,17 +177,22 @@ app.post('/api/chat', async (req, res) => {
 
 if (fs.existsSync(DIST)) {
   app.use(express.static(DIST));
-  app.get('*', (_req, res) => {
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
     res.sendFile(path.join(DIST, 'index.html'));
   });
 } else {
   app.get('/', (_req, res) => {
     res.type('html').send(
-      `<p>MedAssist API is running. Build the web app with <code>npm run export:web</code> to serve UI from <code>dist/</code>, or use <code>npm run web</code> for Expo.</p>`
+      `<p>MedAssist API is running (Azure ADT + Cosmos routes ready). Use <code>npm run web</code> for Expo UI, or <code>npm run export:web</code> then restart to serve <code>dist/</code>.</p>`
     );
   });
 }
 
 app.listen(PORT, () => {
+  const azure = getAzureStatus();
   console.log(`[MedAssist server] http://127.0.0.1:${PORT}`);
+  console.log(
+    `[MedAssist server] mode=${azure.mode} adt=${azure.adtConfigured} cosmos=${azure.cosmosConfigured}`
+  );
 });

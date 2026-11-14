@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { subscribeTwin } from '../_services/digitalTwinStore';
 import { getModelInfo } from '../_services/mlAnomalyModel';
+import { refreshAzureStatus, getAzureStatus } from '../_services/azureDigitalTwins';
 
 function TwinCard({ title, icon, color, children }) {
   return (
@@ -29,9 +30,17 @@ function Row({ label, value }) {
 
 export default function TwinScreen() {
   const [snap, setSnap] = useState(null);
+  const [azure, setAzure] = useState(getAzureStatus());
   const model = getModelInfo();
 
   useEffect(() => subscribeTwin(setSnap), []);
+  useEffect(() => {
+    refreshAzureStatus().then(setAzure).catch(() => {});
+    const id = setInterval(() => {
+      refreshAzureStatus().then(setAzure).catch(() => {});
+    }, 15000);
+    return () => clearInterval(id);
+  }, []);
 
   if (!snap) {
     return (
@@ -51,10 +60,11 @@ export default function TwinScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
       <View style={styles.hero}>
-        <Text style={styles.heroTitle}>Azure Digital Twin (local mirror)</Text>
+        <Text style={styles.heroTitle}>Azure Digital Twin</Text>
         <Text style={styles.heroSub}>
-          Mode: {snap.mode} · DTDL patient / wearable / environment · telemetry from simulated
-          ESP32
+          UI mode: {snap.mode} · ADT secrets: {azure.adtConfigured ? 'bound' : 'local fallback'} ·
+          Cosmos: {azure.cosmosConfigured ? 'bound' : 'local fallback'} · DTDL patient / wearable /
+          environment
         </Text>
       </View>
 
