@@ -19,12 +19,15 @@ Open the Expo URL → **Continue as Demo**.
 
 Tabs: Home · Dashboard (ML risk) · Twin · Medical AI · Profile.
 
-## Optional API host
+## API host (Azure ADT + Cosmos + chat)
 
 ```bash
-npm run export:web   # writes dist/
-npm run server       # Express on :3000 serves dist + /api/chat
+npm run server       # Express on :3000 — /api/telemetry, /api/twin, /api/vitals/history, /api/chat
+# with Expo UI also running, telemetry is posted to the API automatically
+npm run azure:bootstrap   # upload DTDL + upsert twins when ADT secrets are set
 ```
+
+**Database choice:** Azure **Cosmos DB** (SQL API) for vitals history + twin snapshots — document-shaped data matches ADT payloads. Details: [`docs/AZURE.md`](docs/AZURE.md).
 
 ## Secrets (names only — set in Cursor Secrets / host env)
 
@@ -37,8 +40,11 @@ npm run server       # Express on :3000 serves dist + /api/chat
 | `AZURE_TENANT_ID` | No | Entra tenant |
 | `AZURE_CLIENT_ID` | No | App registration id |
 | `AZURE_CLIENT_SECRET` | No | App registration secret |
+| `AZURE_COSMOS_ENDPOINT` | No | Cosmos account URI |
+| `AZURE_COSMOS_KEY` | No | Cosmos key |
+| `AZURE_COSMOS_DATABASE` | No | Default `medassist` |
 
-Demo works with **zero** secrets (local twin + local chat + ML).
+Demo works with **zero** secrets (local twin + local chat + ML). With secrets, `POST /api/telemetry` writes Cosmos and patches ADT.
 
 ## ML model
 

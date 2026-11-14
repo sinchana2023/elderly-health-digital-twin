@@ -137,9 +137,9 @@ export function updateTwinFromTelemetry(sample) {
 
   notify();
 
-  // Fire-and-forget optional Azure sync
+  // Fire-and-forget: API → Cosmos persist + real ADT patch when secrets exist
   import('./azureDigitalTwins')
-    .then((mod) => mod.maybeSyncTwinPatch?.(g, risk))
+    .then((mod) => mod.maybeSyncTwinPatch?.(g, risk, sample))
     .catch(() => {});
 
   return { graph: g, risk };

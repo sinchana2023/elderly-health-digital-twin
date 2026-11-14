@@ -11,6 +11,7 @@
     "build": "expo export -p web",
     "export:web": "expo export -p web",
     "server": "node server/index.js",
+    "azure:bootstrap": "node -e \"require('./server/azure/adtClient').bootstrapAdt().then(r=>console.log(r)).catch(e=>{console.error(e);process.exit(1)})\"",
     "train:ml": "node scripts/trainAnomalyModel.js",
     "test": "jest --watchAll",
     "lint": "expo lint"
@@ -19,6 +20,9 @@
     "preset": "jest-expo"
   },
   "dependencies": {
+    "@azure/cosmos": "^4.10.2",
+    "@azure/digital-twins-core": "^2.0.0",
+    "@azure/identity": "^4.14.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@expo/vector-icons": "^14.0.4",
