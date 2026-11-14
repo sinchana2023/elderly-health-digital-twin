@@ -1,8 +1,13 @@
-# MedAssist — Elderly IoT Health Monitoring (Web Demo)
+# MedAssist — Elderly IoT + Digital Twin + ML + AI Chat
 
-Batch 55 capstone recovery: **MedAssist** monitors elderly vitals from an ESP32 sensor kit (heart rate, SpO2, body/room temp, motion, GPS). This branch runs as a **hostable web demo** with **local mock sensor data** — no Azure IoT Hub, Firebase, or Arduino required.
+Batch 55 capstone recovery with:
 
-## Run locally (web)
+- **Local / Azure Digital Twins** (DTDL patient, wearable, environment)
+- **Simulated ESP32 vitals** feeding the twin and UI
+- **ML anomaly scoring** (logistic regression on synthetic elderly vitals)
+- **Guardrailed Medical AI chat** (API when keyed; local fallback otherwise)
+
+## Run (web UI)
 
 ```bash
 cd med/MedicalApp
@@ -10,31 +15,39 @@ npm install
 npm run web
 ```
 
-Open the URL Expo prints (usually `http://localhost:8081`).
+Open the Expo URL → **Continue as Demo**.
 
-### Demo login
+Tabs: Home · Dashboard (ML risk) · Twin · Medical AI · Profile.
 
-- Tap **Continue as Demo**, or
-- Email / password: any values (e.g. `demo@medassist.local` / `demo1234`)
+## Optional API host
 
-## What was mocked
+```bash
+npm run export:web   # writes dist/
+npm run server       # Express on :3000 serves dist + /api/chat
+```
 
-| Original | Demo |
-|----------|------|
-| ESP32 → Azure IoT Hub | `app/services/mockHealthStore.js` simulated stream |
-| Firebase Auth / Firestore | Local AsyncStorage demo session |
-| Push notifications | In-app alert list (web-safe) |
-| Live maps | Coordinates + chart; map tiles omitted |
+## Secrets (names only — set in Cursor Secrets / host env)
 
-Preserved UX: splash → onboarding → login → Home / Dashboard / Medical AI / Profile, vitals detail screens, anomaly alerts (fever, SpO2, BPM, fall).
+| Name | Required? | Purpose |
+|------|-----------|---------|
+| `MEDASSIST_AI_API_KEY` | No | OpenAI-compatible key for `/api/chat` |
+| `MEDASSIST_AI_BASE_URL` | No | API base (default `https://api.openai.com/v1`) |
+| `MEDASSIST_AI_MODEL` | No | Model id (default `gpt-4o-mini`) |
+| `AZURE_DIGITAL_TWINS_URL` | No | ADT instance URL |
+| `AZURE_TENANT_ID` | No | Entra tenant |
+| `AZURE_CLIENT_ID` | No | App registration id |
+| `AZURE_CLIENT_SECRET` | No | App registration secret |
 
-## Product identity
+Demo works with **zero** secrets (local twin + local chat + ML).
 
-- Brand: **MedAssist** — “Your Health Companion”
-- Accent: `#00CEC9`
-- Theme: elderly IoT health monitoring (Batch 55)
+## ML model
 
-## Notes
+```bash
+npm run train:ml
+```
 
-- `npm run web` uses Expo web (`react-native-web`).
-- Optional static export: `npx expo export -p web` (output under `dist/`).
+Docs: [`models/ml/README.md`](models/ml/README.md). DTDL: [`models/dtdl/`](models/dtdl/).
+
+## Chat guardrails
+
+Medical-info only · no diagnosis/prescription · refuse harmful/out-of-scope · always non-doctor disclaimer.

@@ -1,0 +1,14 @@
+{
+  "@id": "dtmi:medassist:CareEnvironment;1",
+  "@type": "Interface",
+  "@context": "dtmi:dtdl:context;3",
+  "displayName": "Care Environment",
+  "description": "Indoor environment around the elderly patient (DHT11 room sensors).",
+  "contents": [
+    { "@type": "Property", "name": "roomId", "schema": "string" },
+    { "@type": "Property", "name": "roomTempC", "schema": "double" },
+    { "@type": "Property", "name": "humidityPct", "schema": "double" },
+    { "@type": "Property", "name": "comfortIndex", "schema": "double" },
+    { "@type": "Property", "name": "lastUpdated", "schema": "dateTime" }
+  ]
+}

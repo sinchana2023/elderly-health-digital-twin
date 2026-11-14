@@ -1,0 +1,37 @@
+{
+  "@id": "dtmi:medassist:WearableDevice;1",
+  "@type": "Interface",
+  "@context": "dtmi:dtdl:context;3",
+  "displayName": "Wearable / ESP32 Kit",
+  "description": "Wearable sensor kit (MAX30100, LM35, MPU6050, GPS) attached to the patient.",
+  "contents": [
+    { "@type": "Property", "name": "deviceId", "schema": "string" },
+    { "@type": "Property", "name": "bpm", "schema": "double" },
+    { "@type": "Property", "name": "spo2", "schema": "double" },
+    { "@type": "Property", "name": "bodyTempC", "schema": "double" },
+    { "@type": "Property", "name": "accX", "schema": "double" },
+    { "@type": "Property", "name": "accY", "schema": "double" },
+    { "@type": "Property", "name": "accZ", "schema": "double" },
+    { "@type": "Property", "name": "gyroX", "schema": "double" },
+    { "@type": "Property", "name": "gyroY", "schema": "double" },
+    { "@type": "Property", "name": "gyroZ", "schema": "double" },
+    { "@type": "Property", "name": "gpsLat", "schema": "double" },
+    { "@type": "Property", "name": "gpsLng", "schema": "double" },
+    { "@type": "Property", "name": "gpsSpeed", "schema": "double" },
+    { "@type": "Property", "name": "fallLikely", "schema": "boolean" },
+    { "@type": "Property", "name": "lastTelemetry", "schema": "dateTime" },
+    {
+      "@type": "Telemetry",
+      "name": "vitalsSample",
+      "schema": {
+        "@type": "Object",
+        "fields": [
+          { "name": "bpm", "schema": "double" },
+          { "name": "spo2", "schema": "double" },
+          { "name": "bodyTempC", "schema": "double" },
+          { "name": "accMagnitude", "schema": "double" }
+        ]
+      }
+    }
+  ]
+}

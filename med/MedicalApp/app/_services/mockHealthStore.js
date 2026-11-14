@@ -34,21 +34,23 @@ function createSample(partial = {}) {
   let gyro_z = rand(-5, 5);
   let gps_speed = rand(0, 0.8);
 
-  if (anomalyRoll > 0.92) {
-    // mild SpO2 dip
-    spo2 = randInt(88, 93);
-  } else if (anomalyRoll > 0.85) {
-    // elevated heart rate
-    bpm = randInt(105, 125);
-  } else if (anomalyRoll > 0.8) {
-    // mild fever
-    lm35_temp = rand(37.6, 38.2);
-  } else if (anomalyRoll > 0.76) {
+  if (anomalyRoll > 0.93) {
+    spo2 = randInt(86, 92);
+  } else if (anomalyRoll > 0.87) {
+    bpm = randInt(108, 132);
+  } else if (anomalyRoll > 0.82) {
+    lm35_temp = rand(37.6, 38.4);
+  } else if (anomalyRoll > 0.78) {
+    lm35_temp = rand(34.8, 35.6);
+  } else if (anomalyRoll > 0.74) {
     // simulated impact / fall-like spike
     acc_x = rand(18, 28);
     acc_y = rand(-8, 8);
     acc_z = rand(2, 12);
     gyro_x = rand(80, 140);
+  } else if (anomalyRoll > 0.7) {
+    dht_temp = rand(31, 35);
+    dht_hum = rand(72, 88);
   }
 
   return {
@@ -108,6 +110,10 @@ function pushSample(partial) {
   if (history.length > HISTORY_SIZE) {
     history = history.slice(-HISTORY_SIZE);
   }
+  // Keep Digital Twin + ML risk in sync with every telemetry tick
+  import('./digitalTwinStore')
+    .then((mod) => mod.updateTwinFromTelemetry(sample))
+    .catch(() => {});
   notify();
   return sample;
 }

@@ -1,0 +1,26 @@
+{
+  "@id": "dtmi:medassist:ElderlyPatient;1",
+  "@type": "Interface",
+  "@context": "dtmi:dtdl:context;3",
+  "displayName": "Elderly Patient",
+  "description": "Digital Twin of an elderly care recipient monitored by MedAssist.",
+  "contents": [
+    { "@type": "Property", "name": "fullName", "schema": "string" },
+    { "@type": "Property", "name": "age", "schema": "integer" },
+    { "@type": "Property", "name": "homeLatitude", "schema": "double" },
+    { "@type": "Property", "name": "homeLongitude", "schema": "double" },
+    { "@type": "Property", "name": "riskScore", "schema": "double" },
+    { "@type": "Property", "name": "riskLevel", "schema": "string" },
+    { "@type": "Property", "name": "lastUpdated", "schema": "dateTime" },
+    {
+      "@type": "Relationship",
+      "name": "wears",
+      "target": "dtmi:medassist:WearableDevice;1"
+    },
+    {
+      "@type": "Relationship",
+      "name": "locatedIn",
+      "target": "dtmi:medassist:CareEnvironment;1"
+    }
+  ]
+}

@@ -1,5 +1,4 @@
 import { Tabs } from 'expo-router';
-import { FontAwesome5 } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SharedHeader from '../_components/SharedHeader';
@@ -39,7 +38,8 @@ export default function TabLayout() {
           const title = options.headerTitle || options.title || route.name;
           return <SharedHeader title={title} userData={userData} />;
         },
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
@@ -55,6 +55,15 @@ export default function TabLayout() {
           title: 'Dashboard',
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="view-dashboard" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="twin"
+        options={{
+          title: 'Twin',
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons name="cube-outline" size={24} color={color} />
           ),
         }}
       />
@@ -76,6 +85,12 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="scheduler"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
-} 
+}

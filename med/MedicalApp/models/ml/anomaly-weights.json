@@ -1,0 +1,50 @@
+{
+  "name": "medassist-vitals-logistic-v1",
+  "type": "logistic_regression",
+  "description": "Binary risk classifier trained on synthetic elderly vitals (normal vs anomalous). Output is P(anomaly).",
+  "featureOrder": [
+    "bpm_z",
+    "spo2_deficit",
+    "fever_delta",
+    "hypo_delta",
+    "acc_mag_norm",
+    "gyro_spike",
+    "heat_humidity",
+    "speed_norm"
+  ],
+  "means": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "scales": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "weights": [
+    0.6337,
+    0.7178,
+    1.2111,
+    1.2233,
+    0.1558,
+    0.9856,
+    1.1414,
+    1.1754
+  ],
+  "bias": -1.4299,
+  "threshold": 0.55,
+  "trainedOn": "synthetic_elderly_vitals_v1",
+  "trainAccuracy": 0.965,
+  "version": 1
+}
