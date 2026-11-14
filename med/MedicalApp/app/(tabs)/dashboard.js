@@ -13,7 +13,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import NotificationList from '../_components/NotificationList';
 import { getCurrentNotifications } from '../_services/anomalyDetection';
-import { getLatest, getHistory, subscribe } from '../_services/mockHealthStore';
+import { subscribe } from '../_services/mockHealthStore';
+import { subscribeTwin } from '../_services/digitalTwinStore';
+import { scoreAnomaly } from '../_services/mlAnomalyModel';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -22,6 +24,7 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [bpmHistory, setBpmHistory] = useState([]);
   const [alertCount, setAlertCount] = useState(0);
+  const [risk, setRisk] = useState(null);
 
   useEffect(() => {
     const unsub = subscribe((latest, history) => {
@@ -32,10 +35,17 @@ export default function DashboardScreen() {
           timestamp: row.timestamp,
         }))
       );
+      if (latest) setRisk(scoreAnomaly(latest));
       setAlertCount(getCurrentNotifications().length);
       setLoading(false);
     });
-    return () => unsub();
+    const unsubTwin = subscribeTwin((snap) => {
+      if (snap?.risk) setRisk(snap.risk);
+    });
+    return () => {
+      unsub();
+      unsubTwin();
+    };
   }, []);
 
   const pieData = metrics
@@ -127,13 +137,38 @@ export default function DashboardScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.headerText}>Health Dashboard</Text>
-          <Text style={styles.subHeader}>MedAssist · simulated ESP32 stream</Text>
+          <Text style={styles.subHeader}>MedAssist · twin + ML risk · simulated ESP32</Text>
         </View>
         <View style={styles.badge}>
           <MaterialCommunityIcons name="bell-outline" size={18} color="#fff" />
           <Text style={styles.badgeText}>{alertCount}</Text>
         </View>
       </View>
+
+      {risk ? (
+        <TouchableOpacity
+          style={[
+            styles.riskCard,
+            {
+              backgroundColor:
+                risk.riskLevel === 'high'
+                  ? '#d63031'
+                  : risk.riskLevel === 'elevated'
+                    ? '#e17055'
+                    : '#00b894',
+            },
+          ]}
+          onPress={() => router.push('/(tabs)/twin')}
+        >
+          <Text style={styles.riskTitle}>
+            ML risk {risk.riskScore}% · {risk.riskLevel}
+          </Text>
+          <Text style={styles.riskBody}>
+            {(risk.reasons || []).join(' · ') || 'Vitals within model baseline'}
+          </Text>
+          <Text style={styles.riskLink}>View digital twin →</Text>
+        </TouchableOpacity>
+      ) : null}
 
       <View style={styles.chartContainer}>
         <Text style={styles.chartTitle}>Health Metrics Overview</Text>
@@ -225,6 +260,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
   },
+  riskCard: {
+    margin: 20,
+    marginBottom: 0,
+    borderRadius: 12,
+    padding: 14,
+  },
+  riskTitle: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  riskBody: { color: 'rgba(255,255,255,0.95)', marginTop: 6, fontSize: 13, lineHeight: 18 },
+  riskLink: { color: '#fff', marginTop: 8, fontWeight: '600', fontSize: 13 },
   chartContainer: {
     backgroundColor: 'white',
     margin: 20,
