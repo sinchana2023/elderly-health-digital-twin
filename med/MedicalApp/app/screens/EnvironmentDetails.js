@@ -1,123 +1,81 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React from 'react';
 import { View, Text, ScrollView, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db } from '../../config/firebase';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import useMetricHistory from '../_hooks/useMetricHistory';
 
 const EnvironmentDetails = () => {
   const screenWidth = Dimensions.get('window').width;
-  const [tempHistory, setTempHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const intervalRef = useRef(null);
-
-  const fetchTempHistory = async () => {
-    setLoading(true);
-    try {
-      const q = query(
-        collection(db, 'healthMetrics'),
-        orderBy('timestamp', 'desc'),
-        limit(10)
-      );
-      const snapshot = await getDocs(q);
-      const tempList = [];
-      if (!snapshot.empty) {
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const ts = data.timestamp && data.timestamp.toDate ? data.timestamp.toDate() : data.timestamp;
-          tempList.push({ temp: data.lm35_temp, timestamp: ts });
-        });
-      }
-      setTempHistory(tempList.reverse()); // Oldest to newest
-    } catch (err) {
-      setTempHistory([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTempHistory();
-    intervalRef.current = setInterval(fetchTempHistory, 60000); // Refresh every minute
-    return () => clearInterval(intervalRef.current);
-  }, []);
+  const { history, loading, latest } = useMetricHistory('dht_temp');
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <MaterialCommunityIcons name="thermometer" size={40} color="#36A2EB" />
-        <Text style={styles.title}>Environment Details</Text>
+        <MaterialCommunityIcons name="thermometer-lines" size={40} color="#FFCE56" />
+        <Text style={styles.title}>Environment</Text>
       </View>
-      <Text style={styles.subHeader}>Body Temperature Trend (last 10 readings)</Text>
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Text style={styles.statLabel}>Room Temp</Text>
+          <Text style={styles.statValue}>
+            {latest ? `${latest.dht_temp.toFixed(1)}°C` : '--'}
+          </Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statLabel}>Humidity</Text>
+          <Text style={styles.statValue}>
+            {latest ? `${latest.dht_hum.toFixed(0)}%` : '--'}
+          </Text>
+        </View>
+      </View>
+      <Text style={styles.subHeader}>DHT11 room temperature (simulated)</Text>
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} />
-      ) : tempHistory.length > 1 ? (
+        <ActivityIndicator color="#FFCE56" />
+      ) : history.length > 1 ? (
         <LineChart
           data={{
-            labels: tempHistory.map(item => {
+            labels: history.map((item) => {
               const d = new Date(item.timestamp);
               return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
             }),
-            datasets: [
-              {
-                data: tempHistory.map(item => item.temp ?? 0),
-              },
-            ],
+            datasets: [{ data: history.map((h) => h.dht_temp ?? 24) }],
           }}
-          width={screenWidth - 40}
-          height={220}
-          yAxisSuffix="°C"
-          yAxisInterval={1}
+          width={Math.min(screenWidth - 40, 480)}
+          height={180}
+          yAxisSuffix="°"
           chartConfig={{
             backgroundColor: '#fff',
             backgroundGradientFrom: '#fff',
             backgroundGradientTo: '#fff',
-            color: (opacity = 1) => `rgba(54,162,235,${opacity})`,
+            color: (o = 1) => `rgba(255,206,86,${o})`,
             decimalPlaces: 1,
-            propsForLabels: { fontSize: 10 },
-            propsForDots: { r: '3', strokeWidth: '2', stroke: '#36A2EB' },
-            propsForBackgroundLines: { stroke: '#eee' },
           }}
           bezier
-          fromZero
-          yLabelsOffset={10}
-          segments={6}
         />
       ) : (
-        <Text style={styles.noData}>Not enough data for graph</Text>
+        <Text style={styles.noData}>Not enough data</Text>
       )}
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 20,
-  },
-  header: {
-    flexDirection: 'row',
+  container: { flex: 1, backgroundColor: '#f5f5f5', padding: 20 },
+  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
+  title: { fontSize: 24, fontWeight: 'bold', marginLeft: 12 },
+  statsRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 24 },
+  statCard: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 24,
+    width: '40%',
+    elevation: 3,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginLeft: 12,
-  },
-  subHeader: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  noData: {
-    fontSize: 14,
-    color: '#888',
-    textAlign: 'center',
-    marginTop: 40,
-  },
+  statLabel: { color: '#666', fontWeight: 'bold' },
+  statValue: { fontSize: 20, fontWeight: 'bold', color: '#e17055', marginTop: 4 },
+  subHeader: { textAlign: 'center', marginBottom: 10 },
+  noData: { textAlign: 'center', color: '#888' },
 });
 
-export default EnvironmentDetails; 
+export default EnvironmentDetails;

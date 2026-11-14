@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import SharedHeader from '../components/SharedHeader';
+import SharedHeader from '../_components/SharedHeader';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function TabLayout() {

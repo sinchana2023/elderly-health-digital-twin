@@ -2,51 +2,43 @@ import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
-import * as Notifications from 'expo-notifications';
 import { AuthProvider } from '../context/AuthContext';
-import { View, StatusBar } from 'react-native';
+import { View, Platform } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { startMockHealthStore } from './_services/mockHealthStore';
 
-// Keep the splash screen visible while we fetch resources
-SplashScreen.preventAutoHideAsync();
-
-// Configure notifications
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
-  const [loaded] = useFonts({
-    // We'll load fonts here if needed
-  });
+  const [loaded] = useFonts({});
+
+  useEffect(() => {
+    startMockHealthStore();
+  }, []);
 
   useEffect(() => {
     if (loaded) {
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync().catch(() => {});
     }
   }, [loaded]);
 
   useEffect(() => {
-    // Request notification permissions
-    const requestPermissions = async () => {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
+    if (Platform.OS === 'web') return;
+    (async () => {
+      try {
+        const Notifications = await import('expo-notifications');
+        Notifications.setNotificationHandler({
+          handleNotification: async () => ({
+            shouldShowAlert: true,
+            shouldPlaySound: true,
+            shouldSetBadge: true,
+          }),
+        });
+        await Notifications.requestPermissionsAsync();
+      } catch (e) {
+        console.log('Notifications unavailable', e?.message);
       }
-      
-      if (finalStatus !== 'granted') {
-        console.log('Failed to get push token for push notification!');
-        return;
-      }
-    };
-
-    requestPermissions();
+    })();
   }, []);
 
   return (
@@ -55,65 +47,44 @@ export default function RootLayout() {
         <StatusBar style="light" />
         <Stack
           screenOptions={{
-            headerStyle: {
-              backgroundColor: '#4CAF50',
-            },
+            headerStyle: { backgroundColor: '#00CEC9' },
             headerTintColor: '#fff',
-          }}>
+          }}
+        >
+          <Stack.Screen name="splash" options={{ headerShown: false }} />
+          <Stack.Screen name="onboarding/index" options={{ headerShown: false }} />
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen
-            name="splash"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="(auth)/login"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="(tabs)"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen 
             name="screens/HeartDetails"
-            options={{
-              title: 'Heart Rate',
-              headerTintColor: '#FF6384',
-              headerShown: true,
-            }}
+            options={{ title: 'Heart Rate', headerTintColor: '#fff' }}
           />
-          <Stack.Screen 
+          <Stack.Screen
             name="screens/EnvironmentDetails"
-            options={{
-              title: 'Environment',
-              headerTintColor: '#36A2EB',
-              headerShown: true,
-            }}
+            options={{ title: 'Environment', headerTintColor: '#fff' }}
           />
-          <Stack.Screen 
+          <Stack.Screen
             name="screens/BodyTempDetails"
-            options={{
-              title: 'Body Temperature',
-              headerTintColor: '#FFCE56',
-              headerShown: true,
-            }}
+            options={{ title: 'Body Temperature', headerTintColor: '#fff' }}
           />
-          <Stack.Screen 
+          <Stack.Screen
             name="screens/MovementDetails"
-            options={{
-              title: 'Movement',
-              headerTintColor: '#9966FF',
-              headerShown: true,
-            }}
+            options={{ title: 'Movement', headerTintColor: '#fff' }}
           />
-          <Stack.Screen 
+          <Stack.Screen
             name="screens/AccelerationDetails"
-            options={{
-              title: 'Acceleration',
-              headerTintColor: '#4BC0C0',
-              headerShown: true,
-            }}
+            options={{ title: 'Acceleration', headerTintColor: '#fff' }}
+          />
+          <Stack.Screen
+            name="screens/Spo2Details"
+            options={{ title: 'SpO2', headerTintColor: '#fff' }}
+          />
+          <Stack.Screen
+            name="screens/LocationDetails"
+            options={{ title: 'Location', headerTintColor: '#fff' }}
           />
         </Stack>
       </View>
     </AuthProvider>
   );
-} 
+}
