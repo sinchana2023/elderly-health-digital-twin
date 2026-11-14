@@ -12,7 +12,7 @@ import {
 import { FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { stopNotifications } from '../../app/services/anomalyDetection';
+import { stopNotifications } from '../_services/anomalyDetection';
 
 const MenuItem = ({ icon, title, onPress }) => (
   <TouchableOpacity style={styles.menuItem} onPress={onPress}>
@@ -63,8 +63,8 @@ export default function ProfileScreen() {
           onPress: async () => {
             // Stop notifications
             stopNotifications();
-            await AsyncStorage.removeItem('userToken');
-            router.replace('/auth/login');
+            await AsyncStorage.multiRemove(['userToken', 'userData', 'medassist_demo_user']);
+            router.replace('/(auth)/login');
           },
         },
       ],

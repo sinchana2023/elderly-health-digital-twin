@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,77 +7,48 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
-import { auth } from '../../config/firebase';
-import { startNotificationsAfterLogin } from '../services/anomalyDetection';
+import { startNotificationsAfterLogin } from '../_services/anomalyDetection';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('demo@medassist.local');
+  const [password, setPassword] = useState('demo1234');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, loginAsDemo } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    // Check current auth state
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      console.log('Login screen - Auth state changed:', user ? 'User signed in' : 'No user');
-      if (user) {
-        console.log('Login screen - User details:', {
-          uid: user.uid,
-          email: user.email,
-          emailVerified: user.emailVerified
-        });
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
+  const finishLogin = async () => {
+    await startNotificationsAfterLogin();
+    router.replace('/(tabs)');
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-
     setLoading(true);
-    console.log('Login attempt started with email:', email);
-
     try {
-      console.log('Calling login function...');
-      const user = await login(email, password);
-      console.log('Login successful, user:', user);
-      
-      if (user) {
-        // Start notifications after successful login
-        await startNotificationsAfterLogin();
-        console.log('Notifications started after login');
-        
-        console.log('Navigating to home...');
-        router.replace('/(tabs)');
-      }
+      await login(email, password);
+      await finishLogin();
     } catch (error) {
-      console.error('Login error details:', {
-        code: error.code,
-        message: error.message,
-        stack: error.stack
-      });
-      
-      let errorMessage = 'Failed to login. Please try again.';
-      
-      if (error.code === 'auth/operation-not-allowed') {
-        errorMessage = 'Email/password authentication is not enabled. Please contact support.';
-      } else if (error.code === 'auth/user-not-found') {
-        errorMessage = 'No account found with this email. Please sign up first.';
-      } else if (error.code === 'auth/wrong-password') {
-        errorMessage = 'Incorrect password. Please try again.';
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Invalid email address. Please check your email.';
-      }
-      
-      Alert.alert('Login Error', errorMessage);
+      Alert.alert('Login Error', error.message || 'Failed to login');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemo = async () => {
+    setLoading(true);
+    try {
+      await loginAsDemo();
+      await finishLogin();
+    } catch (error) {
+      Alert.alert('Demo Error', error.message || 'Could not start demo');
     } finally {
       setLoading(false);
     }
@@ -85,8 +56,10 @@ export default function Login() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-      
+      <MaterialCommunityIcons name="medical-bag" size={64} color="#00CEC9" />
+      <Text style={styles.brand}>MedAssist</Text>
+      <Text style={styles.subtitle}>Elderly IoT Health Monitoring · Demo</Text>
+
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -95,7 +68,7 @@ export default function Login() {
         autoCapitalize="none"
         keyboardType="email-address"
       />
-      
+
       <TextInput
         style={styles.input}
         placeholder="Password"
@@ -103,12 +76,8 @@ export default function Login() {
         onChangeText={setPassword}
         secureTextEntry
       />
-      
-      <TouchableOpacity 
-        style={styles.button}
-        onPress={handleLogin}
-        disabled={loading}
-      >
+
+      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
         {loading ? (
           <ActivityIndicator color="white" />
         ) : (
@@ -116,11 +85,16 @@ export default function Login() {
         )}
       </TouchableOpacity>
 
-      <TouchableOpacity 
-        style={styles.linkButton}
-        onPress={() => router.push('/signup')}
-      >
-        <Text style={styles.linkText}>Don't have an account? Sign up</Text>
+      <TouchableOpacity style={styles.demoButton} onPress={handleDemo} disabled={loading}>
+        <Text style={styles.demoButtonText}>Continue as Demo</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.hint}>
+        No Firebase or Azure credentials needed. Sensor data is simulated locally.
+      </Text>
+
+      <TouchableOpacity style={styles.linkButton} onPress={() => router.push('/(auth)/signup')}>
+        <Text style={styles.linkText}>Don&apos;t have an account? Sign up</Text>
       </TouchableOpacity>
     </View>
   );
@@ -130,26 +104,37 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
-    backgroundColor: '#fff',
+    padding: 24,
+    backgroundColor: '#f0f7f7',
+    maxWidth: 480,
+    width: '100%',
+    alignSelf: 'center',
   },
-  title: {
-    fontSize: 24,
+  brand: {
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 20,
+    color: '#00CEC9',
     textAlign: 'center',
+    marginTop: 12,
+  },
+  subtitle: {
+    textAlign: 'center',
+    color: '#636e72',
+    marginBottom: 28,
+    marginTop: 6,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#dfe6e9',
+    backgroundColor: '#fff',
     padding: 15,
     marginBottom: 15,
-    borderRadius: 5,
+    borderRadius: 10,
   },
   button: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#00CEC9',
     padding: 15,
-    borderRadius: 5,
+    borderRadius: 10,
     alignItems: 'center',
   },
   buttonText: {
@@ -157,12 +142,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  demoButton: {
+    marginTop: 12,
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#00CEC9',
+    backgroundColor: '#fff',
+  },
+  demoButtonText: {
+    color: '#00CEC9',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  hint: {
+    marginTop: 16,
+    textAlign: 'center',
+    color: '#636e72',
+    fontSize: 13,
+    lineHeight: 18,
+  },
   linkButton: {
-    marginTop: 15,
+    marginTop: 18,
     alignItems: 'center',
   },
   linkText: {
-    color: '#4CAF50',
-    fontSize: 16,
+    color: '#00CEC9',
+    fontSize: 15,
   },
-}); 
+});

@@ -1,50 +1,40 @@
-# Welcome to your Expo app 👋
+# MedAssist — Elderly IoT Health Monitoring (Web Demo)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Batch 55 capstone recovery: **MedAssist** monitors elderly vitals from an ESP32 sensor kit (heart rate, SpO2, body/room temp, motion, GPS). This branch runs as a **hostable web demo** with **local mock sensor data** — no Azure IoT Hub, Firebase, or Arduino required.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Run locally (web)
 
 ```bash
-npm run reset-project
+cd med/MedicalApp
+npm install
+npm run web
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Open the URL Expo prints (usually `http://localhost:8081`).
 
-## Learn more
+### Demo login
 
-To learn more about developing your project with Expo, look at the following resources:
+- Tap **Continue as Demo**, or
+- Email / password: any values (e.g. `demo@medassist.local` / `demo1234`)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## What was mocked
 
-## Join the community
+| Original | Demo |
+|----------|------|
+| ESP32 → Azure IoT Hub | `app/services/mockHealthStore.js` simulated stream |
+| Firebase Auth / Firestore | Local AsyncStorage demo session |
+| Push notifications | In-app alert list (web-safe) |
+| Live maps | Coordinates + chart; map tiles omitted |
 
-Join our community of developers creating universal apps.
+Preserved UX: splash → onboarding → login → Home / Dashboard / Medical AI / Profile, vitals detail screens, anomaly alerts (fever, SpO2, BPM, fall).
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Product identity
+
+- Brand: **MedAssist** — “Your Health Companion”
+- Accent: `#00CEC9`
+- Theme: elderly IoT health monitoring (Batch 55)
+
+## Notes
+
+- `npm run web` uses Expo web (`react-native-web`).
+- Optional static export: `npx expo export -p web` (output under `dist/`).

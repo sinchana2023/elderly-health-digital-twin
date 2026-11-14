@@ -10,20 +10,15 @@ import {
   Alert,
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import * as Notifications from 'expo-notifications';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { db } from '../../config/firebase';
 import { addMedication, getPatientMedications } from '../../config/database';
-import { auth } from '../../config/firebase';
 
-// Configure notifications
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+// Notifications soft-stubbed for web demo (no push permissions)
+const Notifications = {
+  scheduleNotificationAsync: async () => {},
+  requestPermissionsAsync: async () => ({ status: 'granted' }),
+};
+const DEMO_UID = 'demo-user';
 
 export default function MedicineScheduler() {
   const [selectedDate, setSelectedDate] = useState('');
@@ -38,24 +33,11 @@ export default function MedicineScheduler() {
   // Load saved medications when component mounts
   useEffect(() => {
     loadMedications();
-    requestNotificationPermission();
   }, []);
-
-  const requestNotificationPermission = async () => {
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Please allow notifications to receive medicine reminders.');
-    }
-  };
 
   const loadMedications = async () => {
     try {
-      if (!auth.currentUser) {
-        console.log('No user logged in');
-        return;
-      }
-
-      const patientId = auth.currentUser.uid;
+      const patientId = DEMO_UID;
       const patientMedications = await getPatientMedications(patientId);
       
       // Organize medications by date
@@ -101,18 +83,13 @@ export default function MedicineScheduler() {
   };
 
   const handleAddMedication = async () => {
-    if (!auth.currentUser) {
-      Alert.alert('Error', 'Please log in to add medications');
-      return;
-    }
-
     if (!selectedDate || !medicineName || !time || !dosage) {
       Alert.alert('Missing Information', 'Please fill in all required fields.');
       return;
     }
 
     try {
-      const patientId = auth.currentUser.uid;
+      const patientId = DEMO_UID;
       const newMedication = {
         name: medicineName,
         dosage,

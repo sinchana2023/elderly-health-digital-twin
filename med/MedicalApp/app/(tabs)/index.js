@@ -1,30 +1,65 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { subscribe } from '../_services/mockHealthStore';
+import { useRouter } from 'expo-router';
 
-export default function Dashboard() {
+function LiveHealthStats() {
+  const [metrics, setMetrics] = useState(null);
+  useEffect(() => subscribe((latest) => setMetrics(latest)), []);
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Live Vitals (simulated)</Text>
+      <View style={styles.statsContainer}>
+        <View style={styles.statCard}>
+          <FontAwesome5 name="heartbeat" size={24} color="#00CEC9" />
+          <Text style={styles.statValue}>{metrics ? `${metrics.bpm} BPM` : '--'}</Text>
+          <Text style={styles.statLabel}>Heart Rate</Text>
+        </View>
+        <View style={styles.statCard}>
+          <FontAwesome5 name="lungs" size={24} color="#00CEC9" />
+          <Text style={styles.statValue}>{metrics ? `${metrics.spo2}%` : '--'}</Text>
+          <Text style={styles.statLabel}>SpO2</Text>
+        </View>
+        <View style={styles.statCard}>
+          <FontAwesome5 name="thermometer-half" size={24} color="#00CEC9" />
+          <Text style={styles.statValue}>
+            {metrics ? `${metrics.lm35_temp.toFixed(1)}°C` : '--'}
+          </Text>
+          <Text style={styles.statLabel}>Body Temp</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+export default function HomeScreen() {
+  const router = useRouter();
   return (
     <ScrollView style={styles.container}>
+      <View style={styles.hero}>
+        <Text style={styles.heroBrand}>MedAssist</Text>
+        <Text style={styles.heroText}>Elderly IoT health companion</Text>
+      </View>
       {/* Quick Actions */}
       <View style={styles.quickActions}>
-        <TouchableOpacity style={styles.actionCard}>
-          <FontAwesome5 name="calendar-plus" size={24} color="#00CEC9" />
-          <Text style={styles.actionText}>Book Appointment</Text>
+        <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(tabs)/dashboard')}>
+          <FontAwesome5 name="heartbeat" size={24} color="#00CEC9" />
+          <Text style={styles.actionText}>Vitals Dashboard</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionCard}>
           <FontAwesome5 name="pills" size={24} color="#00CEC9" />
           <Text style={styles.actionText}>Medicine Reminder</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionCard}>
-          <FontAwesome5 name="file-medical" size={24} color="#00CEC9" />
-          <Text style={styles.actionText}>Health Records</Text>
+        <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(tabs)/chatbot')}>
+          <FontAwesome5 name="robot" size={24} color="#00CEC9" />
+          <Text style={styles.actionText}>Medical AI</Text>
         </TouchableOpacity>
       </View>
 
@@ -58,27 +93,8 @@ export default function Dashboard() {
         </View>
       </View>
 
-      {/* Health Stats */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Health Stats</Text>
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <FontAwesome5 name="heartbeat" size={24} color="#00CEC9" />
-            <Text style={styles.statValue}>72 BPM</Text>
-            <Text style={styles.statLabel}>Heart Rate</Text>
-          </View>
-          <View style={styles.statCard}>
-            <FontAwesome5 name="walking" size={24} color="#00CEC9" />
-            <Text style={styles.statValue}>8,234</Text>
-            <Text style={styles.statLabel}>Steps</Text>
-          </View>
-          <View style={styles.statCard}>
-            <FontAwesome5 name="bed" size={24} color="#00CEC9" />
-            <Text style={styles.statValue}>7.5h</Text>
-            <Text style={styles.statLabel}>Sleep</Text>
-          </View>
-        </View>
-      </View>
+      {/* Health Stats — live mock vitals */}
+      <LiveHealthStats />
     </ScrollView>
   );
 }
@@ -86,7 +102,22 @@ export default function Dashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f0f7f7',
+  },
+  hero: {
+    backgroundColor: '#00CEC9',
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+  },
+  heroBrand: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  heroText: {
+    color: 'rgba(255,255,255,0.92)',
+    marginTop: 4,
+    fontSize: 15,
   },
   quickActions: {
     flexDirection: 'row',

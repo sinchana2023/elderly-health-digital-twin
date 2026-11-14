@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { addNotificationListener, getCurrentNotifications } from '../services/anomalyDetection';
+import { addNotificationListener, getCurrentNotifications } from '../_services/anomalyDetection';
 
 export default function NotificationList() {
   const [notifications, setNotifications] = useState([]);
